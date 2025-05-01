@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+dynamic = ["version"]
+name = "cs9-autograder"
+requires-python = ">= 3.10"
+authors = [
+    {name = "Iris Hitomi Nakayama", email = "nakayama@ucsb.edu"},
+    {name = "Michelle Zimmermann", email = "michellezimmermann@ucsb.edu"}
+]
+maintainers = [
+    {name = "Yekaterina Kharitonova", email = "ykk@cs.ucsb.edu"}
+readme = "README.md"
+]
+
+[project.urls]
+Repository = "https://github.com/ucsb-cs9/cs9-lab-autograder"

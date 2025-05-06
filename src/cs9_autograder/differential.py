@@ -55,9 +55,9 @@ class DifferentialMethodAutograder(Autograder):
 
 
 class differential_method:
-    def __init__(self, ctor_args: Optional[tuple[...]] = None,
+    def __init__(self, ctor_args: Optional[tuple] = None,
                  ctor_kwargs: Optional[Mapping[str, Any]] = None,
-                 m_args: Optional[tuple[...]] = None,
+                 m_args: Optional[tuple] = None,
                  m_kwargs: Optional[Mapping[str, Any]] = None):
 
         self.ctor_args = ctor_args if ctor_args else ()

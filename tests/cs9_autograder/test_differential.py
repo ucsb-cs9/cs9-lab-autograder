@@ -5,27 +5,7 @@ import unittest
 from cs9_autograder import (Autograder, differential, differential_method,
                             DifferentialMethodAutograder)
 
-
-class TestTester():
-    def assertTestCaseNoFailure(self, test_case_class):
-        """Run a TestCase and assert that it has no errors or failures."""
-        self.assertTestCaseFailure(test_case_class, failures=0)
-
-
-    def assertTestCaseFailure(self, test_case_class, failures=1):
-        """Run a TestCase and assert that it has a particular amount of
-        failures."""
-        loader = unittest.TestLoader()
-        test_suite = loader.loadTestsFromTestCase(test_case_class)
-
-        result = unittest.TestResult()
-        test_suite.run(result)
-
-        error_msg = '\n'.join(x[1] for x in result.errors)
-        self.assertEqual(0, len(result.errors), msg=error_msg)
-
-        failure_msg = '\n'.join(x[1] for x in result.failures)
-        self.assertEqual(failures, len(result.failures), msg=failure_msg)
+from .utils import TestTester
 
 
 class TestDifferential(TestCase, TestTester):
@@ -38,7 +18,7 @@ class TestDifferential(TestCase, TestTester):
 
         class Grader(Autograder):
             @differential(correct_func, student_func)
-            def runTest(self, fn):
+            def test(self, fn):
                 return fn()
 
         self.assertTestCaseFailure(Grader)
@@ -53,7 +33,7 @@ class TestDifferential(TestCase, TestTester):
         class Grader(Autograder):
             @differential(correct_func, student_func,
                           assertion=Autograder.assertAlmostEqual)
-            def runTest(self, fn):
+            def test_0(self, fn):
                 return fn()
 
         self.assertTestCaseNoFailure(Grader)
@@ -71,7 +51,7 @@ class TestDifferential(TestCase, TestTester):
         class Grader(Autograder):
             @differential(correct_func, student_func,
                           normalize=normalize)
-            def runTest(self, fn):
+            def test_0(self, fn):
                 return fn()
 
         self.assertTestCaseNoFailure(Grader)
@@ -91,7 +71,7 @@ class TestDifferentialMethod(TestCase, TestTester):
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            runTest = differential_method()
+            test = differential_method()
 
         self.assertTestCaseNoFailure(Grader)
 
@@ -114,7 +94,7 @@ class TestDifferentialMethod(TestCase, TestTester):
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            runTest = differential_method((3,))
+            test = differential_method((3,))
 
         self.assertTestCaseNoFailure(Grader)
 
@@ -131,7 +111,7 @@ class TestDifferentialMethod(TestCase, TestTester):
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            runTest = differential_method(m_args=(1, 3,))
+            test = differential_method(m_args=(1, 3,))
 
         self.assertTestCaseFailure(Grader)
 
@@ -156,7 +136,7 @@ class TestDifferentialMethod(TestCase, TestTester):
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            runTest = differential_method((), {'a': 1},
+            test_0 = differential_method((), {'a': 1},
                                           ('a'), {'z': True})
 
         self.assertTestCaseNoFailure(Grader)

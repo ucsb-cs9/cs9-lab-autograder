@@ -7,8 +7,10 @@ from typing import Optional
 import unittest
 from unittest import TestCase
 
-from cs9_autograder import ignore_prints, import_student, set_submission_path, submission_path
+from cs9_autograder import (Autograder, ignore_prints, importing, import_student,
+                            set_submission_path, submission_path)
 
+from .utils import TestTester
 
 class TestSubmissionPath(TestCase):
     def setUp(self):
@@ -41,7 +43,7 @@ class TestSubmissionPath(TestCase):
 
         self.assertEqual(my_path, submission_path())
 
-class TestImportStudent(TestCase):
+class TestImportStudent(TestCase, TestTester):
     def setUp(self):
         self.path_config = get_submission_path_config()
 
@@ -52,13 +54,30 @@ class TestImportStudent(TestCase):
     def tearDown(self):
         restore_submission_path_config(self.path_config)
 
+        importing.FAILED_IMPORTS.clear()
+
     def test_import_student_working(self):
         student_mod = import_student('working')
 
-        print(student_mod)
-
         self.assertTrue(student_mod.hello_world())
 
+    def test_import_student_file_not_exist(self):
+        student_mod = import_student('non_existant')
+
+        class Grader(Autograder):
+            pass
+
+        # we should get one failure from Autograder's test_student_imports
+        self.assertTestCaseFailure(Grader)
+
+    def test_import_student_exception_during_import(self):
+        student_mod = import_student('value_error')
+
+        class Grader(Autograder):
+            pass
+
+        # we should get one failure from Autograder's test_student_imports
+        self.assertTestCaseFailure(Grader)
 
 class TestIgnorePrints(TestCase):
     def test_ignore_prints(self):
@@ -71,8 +90,6 @@ class TestIgnorePrints(TestCase):
 SubmissionPathConfig = tuple[Optional[Path], Optional[str]]
 
 def get_submission_path_config() -> SubmissionPathConfig:
-    from cs9_autograder import importing
-
     global_path = importing._SUBMISSION_PATH
     try:
         env_path = os.environ['SUBMISSION_PATH']
@@ -83,8 +100,6 @@ def get_submission_path_config() -> SubmissionPathConfig:
 
 
 def restore_submission_path_config(config: SubmissionPathConfig):
-    from cs9_autograder import importing
-
     global_path, env_path = config
     importing._SUBMISSION_PATH = global_path
 

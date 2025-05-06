@@ -7,7 +7,7 @@ source = "vcs"
 
 [project]
 dynamic = ["version"]
-name = "cs9_autograder"
+name = "cs9-autograder"
 requires-python = ">= 3.10"
 authors = [
     {name = "Iris Hitomi Nakayama", email = "nakayama@ucsb.edu"},

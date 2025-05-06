@@ -6,6 +6,8 @@ from .importing import FAILED_IMPORTS
 
 class Autograder(unittest.TestCase):
     def test_student_imports(self):
+        """Check if there have been any failed imports, and report them to the
+        student"""
         if not FAILED_IMPORTS:
             return
 

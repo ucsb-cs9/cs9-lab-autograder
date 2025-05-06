@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 from types import ModuleType
+from typing import cast
 
 _DEFAULT_SUBMISSION_PATH = Path('/autograder/submission')
 _SUBMISSION_PATH = None
@@ -39,9 +40,13 @@ def import_student(module_name: str) -> ModuleType:
 
 def import_from_file(path: Path | str, module_name: str) -> ModuleType:
     spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None:
+        raise TypeError(f'Unable to create spec from `{path}`')
+
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
-    spec.loader.exec_module(module)
+
+    spec.loader.exec_module(module)  # type: ignore
     return module
 
 

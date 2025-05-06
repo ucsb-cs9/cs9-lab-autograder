@@ -68,7 +68,7 @@ class TestIgnorePrints(TestCase):
         self.assertFalse(f.getvalue())
 
 
-SubmissionPathConfig = tuple[Path, Optional[str]]
+SubmissionPathConfig = tuple[Optional[Path], Optional[str]]
 
 def get_submission_path_config() -> SubmissionPathConfig:
     from cs9_autograder import importing

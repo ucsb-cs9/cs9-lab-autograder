@@ -10,7 +10,9 @@ from unittest import TestCase
 from cs9_autograder import (Autograder, ignore_prints, importing, import_student,
                             set_submission_path, submission_path)
 
-from .utils import TestTester
+from .utils import (TestTester, restore_submission_path_config,
+                    get_submission_path_config)
+
 
 class TestSubmissionPath(TestCase):
     def setUp(self):
@@ -85,28 +87,3 @@ class TestIgnorePrints(TestCase):
             with ignore_prints():
                 print("hello world!")
         self.assertFalse(f.getvalue())
-
-
-SubmissionPathConfig = tuple[Optional[Path], Optional[str]]
-
-def get_submission_path_config() -> SubmissionPathConfig:
-    global_path = importing._SUBMISSION_PATH
-    try:
-        env_path = os.environ['SUBMISSION_PATH']
-    except KeyError:
-        env_path = None
-
-    return global_path, env_path
-
-
-def restore_submission_path_config(config: SubmissionPathConfig):
-    global_path, env_path = config
-    importing._SUBMISSION_PATH = global_path
-
-    if env_path is None:
-        try:
-            del os.environ['SUBMISSION_PATH']
-        except KeyError:
-            pass
-    else:
-        os.environ['SUBMISSION_PATH'] = env_path

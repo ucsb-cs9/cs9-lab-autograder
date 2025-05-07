@@ -7,6 +7,11 @@ source = "vcs"
 
 [project]
 dynamic = ["version"]
+dependencies = [
+    "pytest",
+    "pytest-cov",
+    "pytest-reportlog"
+]
 name = "cs9-autograder"
 requires-python = ">= 3.10"
 authors = [

@@ -4,24 +4,20 @@ from pathlib import Path
 import unittest
 from unittest import TestCase
 
-from .utils import (TestTester, get_submission_path_config,
-                    restore_submission_path_config)
+from .mixins import (SubmissionPathRestorer, TestTester)
 
 from cs9_autograder import (Autograder, t_coverage, set_submission_path,
                             test_file_runner,
                             TestingAutograder, TestingReport)
 
 
-class TestTestingAutograder(TestCase, TestTester):
+class TestTestingAutograder(TestTester, SubmissionPathRestorer, TestCase):
     def setUp(self):
-        self.path_config = get_submission_path_config()
+        super().setUp()
 
         script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
         self.test_path = script_dir / 'coverage_test_files'
         set_submission_path(self.test_path)
-
-    def tearDown(self):
-        restore_submission_path_config(self.path_config)
 
     def test_testing_autograder_coverage_failure(self):
         class Grader(TestingAutograder, module='testFile'):

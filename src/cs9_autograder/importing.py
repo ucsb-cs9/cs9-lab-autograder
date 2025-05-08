@@ -2,6 +2,7 @@ from contextlib import contextmanager, redirect_stdout
 from dataclasses import dataclass
 from enum import auto, Enum
 import importlib.util
+import importlib.machinery
 import os
 from pathlib import Path
 import sys
@@ -101,3 +102,27 @@ class ignore_prints:
         redirect_exit = self.redirect_stdout.__exit__(exc_type, exc_value, traceback)
         dev_null_exit = self.dev_null.__exit__(exc_type, exc_value, traceback)
         return redirect_exit or dev_null_exit
+
+
+def module_to_path(module_name: str, search_path: Path) -> Path:
+    """Get the absolute path of a module.
+    module_name: The fully qualified name of the module
+    path: the path in which to search for the module"""
+
+    spec = importlib.machinery.PathFinder.find_spec(module_name, search_path)
+    if not spec:
+        raise ModuleNotFoundError("Could not find loader for module "
+                                  f'`{module_name}` in path `{search_path}`.')
+
+    if not spec.origin:
+        # this case may occur if the
+        raise ModuleNotFoundError(f'The spec for `{module_name}` has no'
+                                  ' origin.')
+
+    try:
+        module_path = Path(spec.origin).resolve(strict=True)
+    except OSError:
+        raise ModuleNotFoundError(f'The module path `{module_path}` does not '
+                                  'exist.')
+
+    return module_path

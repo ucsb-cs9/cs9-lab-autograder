@@ -5,7 +5,7 @@ import unittest
 from cs9_autograder import (Autograder, differential, differential_method,
                             DifferentialMethodAutograder)
 
-from .utils import TestTester
+from .mixins import TestTester
 
 
 class TestDifferential(TestCase, TestTester):

@@ -28,6 +28,20 @@ class TestTester():
         self.assertEqual(failures, len(result.failures), msg=failure_msg)
 
 
+class SubmissionPathRestorer():
+    """A mixin for TestCase which saves the submission path before a test and
+    restore it after."""
+
+    def setUp(self):
+        super().setUp()
+        self.path_config = get_submission_path_config()
+
+    def tearDown(self):
+        super().tearDown()
+        restore_submission_path_config(self.path_config)
+
+
+
 SubmissionPathConfig = tuple[Optional[Path], Optional[str]]
 
 

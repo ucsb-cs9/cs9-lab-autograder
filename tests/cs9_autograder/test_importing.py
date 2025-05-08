@@ -10,17 +10,11 @@ from unittest import TestCase
 from cs9_autograder import (Autograder, ignore_prints, importing, import_student,
                             set_submission_path, submission_path)
 
-from .utils import (TestTester, restore_submission_path_config,
+from .mixins import (SubmissionPathRestorer, TestTester, restore_submission_path_config,
                     get_submission_path_config)
 
 
-class TestSubmissionPath(TestCase):
-    def setUp(self):
-        self.path_config = get_submission_path_config()
-
-    def tearDown(self):
-        restore_submission_path_config(self.path_config)
-
+class TestSubmissionPath(SubmissionPathRestorer, TestCase):
     def test_submission_path_default(self):
         actual = submission_path()
         expected = Path('/autograder/submission')
@@ -45,16 +39,17 @@ class TestSubmissionPath(TestCase):
 
         self.assertEqual(my_path, submission_path())
 
-class TestImportStudent(TestCase, TestTester):
+
+class TestImportStudent(TestTester, SubmissionPathRestorer, TestCase):
     def setUp(self):
-        self.path_config = get_submission_path_config()
+        super().setUp()
 
         script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
         self.test_path = script_dir / 'importing_test_files'
         set_submission_path(self.test_path)
 
     def tearDown(self):
-        restore_submission_path_config(self.path_config)
+        super().setUp()
 
         importing.FAILED_IMPORTS.clear()
 
@@ -81,9 +76,14 @@ class TestImportStudent(TestCase, TestTester):
         # we should get one failure from Autograder's test_student_imports
         self.assertTestCaseFailure(Grader)
 
+
 class TestIgnorePrints(TestCase):
     def test_ignore_prints(self):
         with redirect_stdout(StringIO()) as f:
             with ignore_prints():
                 print("hello world!")
         self.assertFalse(f.getvalue())
+
+
+class TestModuleToPath(TestCase):
+    pass

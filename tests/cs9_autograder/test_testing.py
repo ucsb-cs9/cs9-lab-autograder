@@ -39,7 +39,7 @@ class TestTestingAutograder(TestTester, SubmissionPathRestorer, TestCase):
 
 
 
-class TestTestFile(TestCase, TestTester):
+class TestTestFile(TestTester, TestCase):
 
     def test_test_file(self):
         class Grader(Autograder):

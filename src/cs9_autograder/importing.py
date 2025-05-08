@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from enum import auto, Enum
 import importlib.util
 import importlib.machinery
+from modulefinder import ModuleFinder
 import os
 from pathlib import Path
 import sys
@@ -127,3 +128,28 @@ def module_to_path(module_name: str, search_path: Path | str) -> Path:
                                   'exist.')
 
     return module_path
+
+
+def path_to_module(module_file: Path | str, search_path: Path | str) -> str:
+    """Convert from a path to a module name
+
+    module_file: the path to the python module
+    search_path: the where the module can be found. For a single-file python
+    script, this is the script file's directory."""
+
+    module_file = Path(module_file)
+    search_path = Path(search_path)
+
+    if module_file.suffix != '.py':
+        raise ValueError(f'module_file `{module_file}` is not a .py file. '
+                         '(packages are not yet supported in path_to_module.)')
+
+    if module_file.is_absolute():
+        module_file = module_file.relative_to(search_path)
+
+    if len(module_file.parts) != 1:
+        raise NotImplementedError("Module name resolution is not yet supported"
+                                  "for packages. "
+                                  f'`{module_file}`')
+
+    return str(module_file.with_suffix(''))

@@ -8,7 +8,7 @@ import unittest
 from unittest import TestCase
 
 from cs9_autograder import (Autograder, ignore_prints, importing, import_student,
-                            module_to_path,
+                            module_to_path, path_to_module,
                             set_submission_path, submission_path)
 
 from .mixins import (SubmissionPathRestorer, TestTester, restore_submission_path_config,
@@ -96,4 +96,17 @@ class TestModuleToPath(TestCase):
 
         actual = module_to_path('my_module', search_path)
         expected = search_path / 'my_module.py'
+        self.assertEqual(expected, actual)
+
+
+class TestPathToModule(TestCase):
+    def search_path(self):
+        script_dir = Path(__file__).resolve().parent
+        return script_dir / 'module_to_path_test_files'
+
+    def test_path_to_module(self):
+        search_path = self.search_path()
+
+        actual = path_to_module(search_path / 'my_module.py', search_path)
+        expected = 'my_module'
         self.assertEqual(expected, actual)

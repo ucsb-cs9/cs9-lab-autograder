@@ -8,6 +8,7 @@ import unittest
 from unittest import TestCase
 
 from cs9_autograder import (Autograder, ignore_prints, importing, import_student,
+                            imported_modules,
                             module_to_path, path_to_module,
                             set_submission_path, submission_path)
 
@@ -84,6 +85,20 @@ class TestIgnorePrints(TestCase):
             with ignore_prints():
                 print("hello world!")
         self.assertFalse(f.getvalue())
+
+
+class TestImportedModules(TestCase):
+    def search_path(self):
+        script_dir = Path(__file__).resolve().parent
+        return script_dir / 'imported_modules_test_files'
+
+    def test_imported_modules(self):
+        search_path = self.search_path()
+
+        actual = imported_modules('testFile', search_path)
+        expected = {'from_import_as', 'from_import', 'import_as', 'imported'}
+
+        self.assertEqual(expected, actual)
 
 
 class TestModuleToPath(TestCase):

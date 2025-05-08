@@ -105,6 +105,19 @@ class ignore_prints:
         return redirect_exit or dev_null_exit
 
 
+def imported_modules(module_name: str, search_path: Path | str) -> set[str]:
+    """Return the names of all modules imported by a script."""
+
+     finder = ModuleFinder(path=[str(search_path)])
+     module_path = module_to_path(module_name, search_path)
+     finder.run_script(str(module_path))
+
+     modules = set(finder.modules.keys())
+     modules.remove('__main__')
+
+     return modules
+
+
 def module_to_path(module_name: str, search_path: Path | str) -> Path:
     """Get the absolute path of a module.
     module_name: The fully qualified name of the module

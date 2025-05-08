@@ -8,7 +8,7 @@ from cs9_autograder import (Autograder, differential, differential_method,
 from .mixins import TestTester
 
 
-class TestDifferential(TestCase, TestTester):
+class TestDifferential(TestTester, TestCase):
     def test_diff_function(self):
         def correct_func():
             return True
@@ -57,7 +57,7 @@ class TestDifferential(TestCase, TestTester):
         self.assertTestCaseNoFailure(Grader)
 
 
-class TestDifferentialMethod(TestCase, TestTester):
+class TestDifferentialMethod(TestTester, TestCase):
     def test_differential_method(self):
         class Correct:
             def my_method(self):

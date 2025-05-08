@@ -44,7 +44,7 @@ class TestImportStudent(TestTester, SubmissionPathRestorer, TestCase):
     def setUp(self):
         super().setUp()
 
-        script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+        script_dir = Path(__file__).resolve().parent
         self.test_path = script_dir / 'importing_test_files'
         set_submission_path(self.test_path)
 

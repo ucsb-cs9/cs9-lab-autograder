@@ -49,7 +49,7 @@ class TestImportStudent(TestTester, SubmissionPathRestorer, TestCase):
         set_submission_path(self.test_path)
 
     def tearDown(self):
-        super().setUp()
+        super().tearDown()
 
         importing.FAILED_IMPORTS.clear()
 

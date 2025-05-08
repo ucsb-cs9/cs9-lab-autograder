@@ -104,12 +104,13 @@ class ignore_prints:
         return redirect_exit or dev_null_exit
 
 
-def module_to_path(module_name: str, search_path: Path) -> Path:
+def module_to_path(module_name: str, search_path: Path | str) -> Path:
     """Get the absolute path of a module.
     module_name: The fully qualified name of the module
     path: the path in which to search for the module"""
 
-    spec = importlib.machinery.PathFinder.find_spec(module_name, search_path)
+    spec = importlib.machinery.PathFinder.find_spec(module_name,
+                                                    [str(search_path)])
     if not spec:
         raise ModuleNotFoundError("Could not find loader for module "
                                   f'`{module_name}` in path `{search_path}`.')

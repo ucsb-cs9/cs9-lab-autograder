@@ -7,9 +7,9 @@ import os
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Optional, Self, TextIO
+from typing import Any, Optional, Self, TextIO
 
-from .importing import submission_path
+from .importing import submission_path, module_to_path, path_to_module
 from .formatting import h_rule
 from .autograder import Autograder
 
@@ -17,12 +17,8 @@ from .autograder import Autograder
 class TestingAutograder(Autograder):
     __test__ = False  # tell pytest to ignore this class during test discovery
 
-    def __init_subclass__(cls, /, module=None,
-                          weight=None, **kwargs):
+    def __init_subclass__(cls, /, weight=None, **kwargs):
         super().__init_subclass__(**kwargs)
-
-        # TODO: add resolution for module directories
-        cls.file_name = module + '.py'
 
         cls.testing_log: Optional[TestingReport] = None
 
@@ -30,14 +26,20 @@ class TestingAutograder(Autograder):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.testing_report = run_pytest(cls.file_name,
-                                        coverage_files=cls._coverage_files())
+        cov_modules = cls._coverage_modules()
+        file_name = module_to_path(cls._test_module(), submission_path())
+        stdout, raw_report, raw_cov = run_pytest(
+                file_name, cov_modules=cov_modules)
 
-        print(cls.testing_report)
+        cls.testing_report = TestingReport.from_raw(stdout, raw_report)
 
+        cls.cov_report = CoverageReport.build_report(
+                cov_modules, raw_cov, submission_path())
+
+        print(cls.cov_report)
 
     @classmethod
-    def _coverage_files(cls) -> set[str]:
+    def _coverage_modules(cls) -> set[str]:
         """Get file names that we want to test the coverage for."""
 
         cov_modules = set()
@@ -47,6 +49,22 @@ class TestingAutograder(Autograder):
 
         return cov_modules
 
+    @classmethod
+    def _test_module(cls) -> set[str]:
+        """Get file names that we want to test the coverage for."""
+
+        mod = None
+        for attr in vars(cls).values():
+            if isinstance(attr, t_module):
+                if mod:
+                    raise ValueError("Only one t_module is supported in "
+                                     "TestingAutograder")
+                mod = attr.module_name
+
+        if not mod:
+            raise ValueError("TestingAutograder must have one t_module.")
+
+        return mod
 
 
 class t_coverage:
@@ -60,28 +78,28 @@ class t_coverage:
                             "TestingAutograder.")
 
     def __get__(self, instance, owner):
-        # we have to wrap the runner and pass the instance because our
-        # returned function isn't bound as a method by default
-        return lambda: t_coverage_runner(instance)
+        def coverage_runner():
+            cov = owner.cov_report.modules[self.module_name]
+            instance.assertTrue(cov.imported)
+            instance.assertFalse(cov.missing_lines)
+
+        return coverage_runner
 
 
-def t_coverage_runner(self):
-    testing_report = TestingReport
-
-
-
-class test_file_runner:
+class t_module:
     def __init__(self, module_name: str):
         self.module_name = module_name
 
+    def __set_name__(self, owner, name):
+        if not issubclass(owner, TestingAutograder):
+            raise TypeError("t_coverage can only be used inside of "
+                            "TestingAutograder.")
 
     def __get__(self, instance, owner):
-        def runner(self):
-            pass
+        def test_runner():
+            instance.assertTrue(owner.testing_report.success)
 
-        # we have to wrap the runner and pass the instance because our
-        # returned function isn't bound as a method by default
-        return lambda: runner(instance)
+        return test_runner
 
 
 def run_test_file(test_file: Path | str):
@@ -103,64 +121,63 @@ def run_test_file(test_file: Path | str):
             h_rule()
 
 
+RawTestingReport = list[dict]
+RawCoverageReport = dict
+
+
 def run_pytest(test_file: Path | str,
-               coverage_files: Optional[Iterable[str]] = None) -> TestReportLog:
+               cov_modules: Optional[Iterable[str]] = None)\
+                       -> tuple[str, RawTestingReport,
+                                Optional[RawCoverageReport]]:
+
+    """Run pytest
+    Note that the raw coverage report MAY still be none even if you have
+    supplied modules to test
+
+    returns captured stdout, raw log, and raw covrage report"""
 
     with NamedTemporaryFile(delete_on_close=False) as log_file:
         with NamedTemporaryFile(delete_on_close=False) as cov_report_file:
 
             args = ['pytest', f'--report-log={log_file.name}']
 
-            if coverage_files:
-                cov_files = ','.join(x for x in coverage_files)
-                args += [f'--cov={cov_files}',
-                         f'--cov-report=json:{cov_report_file.name}']
+            if cov_modules:
+                cov_mod_args = [f'--cov={m}' for m in cov_modules]
+                args += cov_mod_args
+
+                args.append(f'--cov-report=json:{cov_report_file.name}')
 
             args.append(str(test_file))
 
-            result = subprocess.run(args, capture_output=True, text=True,
-                                    cwd=submission_path())
-            print(args)
-            print(result.stdout)
+            result = subprocess.run(
+                    args, capture_output=True, text=True,
+                    cwd=submission_path())
 
-            cov_report_file.seek(0)
+            raw_report = parse_jsonl(log_file)
 
-            cov_arg = cov_report_file if coverage_files else None
-            return TestingReport.from_run(result.stdout, log_file,
-                                          coverage_report_file=cov_arg)
+            raw_cov = None
+            if cov_modules and not is_file_empty(cov_report_file):
+                raw_cov = json.load(cov_report_file)
+
+            return result.stdout, raw_report, raw_cov
+
 
 @dataclass
 class TestingReport:
     success: bool  # whether the test suite was successful
     pretty: str  # the text returned to the console
     failed_tests: set[str]  # a list of failed tests
-    raw_log: list[dict]  # the JSON log file
-    coverage: Optional[CoverageReport] = None
+    raw_report: list[dict]  # the JSON log file
 
     __test__ = False  # tell pytest to ignore this class during test discovery
 
     @classmethod
-    def from_run(cls, captured_stdout: str, log_file: TextIO,
-                 coverage_report_file: Optional[TextIO] = None) -> Self:
-        log = cls.read_json_log(log_file)
-
-        success = cls.read_success(log)
+    def from_raw(cls, captured_stdout: str, raw_report: list[dict]) -> Self:
+        success = cls.read_success(raw_report)
         pretty = captured_stdout
-        failed_tests = cls.read_failed_tests(log)
+        failed_tests = cls.read_failed_tests(raw_report)
 
-        cov = None
-        if coverage_report_file:
-            cov = CoverageReport.from_file(coverage_report_file)
-
-        return cls(success, pretty, failed_tests, log, coverage=cov)
-
-    @staticmethod
-    def read_json_log(pytest_report_log: TextIO) -> list[dict]:
-        data = []
-        for line in pytest_report_log:
-            data.append(json.loads(line))
-
-        return data
+        return cls(success, pretty, failed_tests, raw_report)
 
     @staticmethod
     def read_success(log: list[dict]) -> bool:
@@ -193,45 +210,65 @@ class TestingReport:
 
 @dataclass
 class ModuleCoverage:
-    missing_lines: set[int]
+    imported: bool
+    missing_lines: Optional[set[int]]
 
     @classmethod
     def from_json_obj(cls, obj: dict) -> Self:
         missing_lines = set(obj['missing_lines'])
-        return cls(missing_lines)
-
-
+        return cls(imported=True, missing_lines=missing_lines)
 
 
 @dataclass
 class CoverageReport:
-    files: dict[str, ModuleCoverage]
+    modules: dict[str, ModuleCoverage]
 
     @classmethod
-    def from_file(cls, file: TextIO) -> Self:
-        # the json file may be empty if there is no coverage data
-        file.seek(0, os.SEEK_END)
-        if not file.tell():
-            # the JSON file is empty
-            return cls({})
-        file.seek(0)
+    def build_report(cls, cov_modules: Iterable[str],
+                     pytest_cov_raw: dict | None,
+                     search_path: Path | str) -> Self:
+        """Build a report, including files listed but not imported.
+        search_path: root path of the modules."""
 
-        return cls.from_json_obj(json.load(file))
+        cov_modules = set(cov_modules)
+        included = set()
 
-    @classmethod
-    def from_json_obj(cls, obj: dict) -> Self:
-        files = obj['files']
+        modules = {}
 
-        file_cov = {}
-        for file_name, info in files.items():
-            file_cov[file_name] = ModuleCoverage.from_json_obj(info)
+        # sometimes, the coverage report may not generate at all
+        # if no files are included.
+        # in this scenario, pytest_cov_raw would be None.
+        if pytest_cov_raw:
+            files = pytest_cov_raw['files']
+            for file_name, info in files.items():
+                mod_name = path_to_module(file_name, search_path)
+                included.add(mod_name)
 
-        return cls(file_cov)
+                modules[mod_name] = ModuleCoverage.from_json_obj(info)
+
+        not_included = cov_modules - included
+        for mod in not_included:
+            modules[mod] = ModuleCoverage(imported=False, missing_lines=None)
+
+        return cls(modules)
 
 
+def parse_jsonl(f: TextIO) -> list:
+    """Parse a jsonl file into a list of Python objects"""
+    data = []
+    for line in f:
+        data.append(json.loads(line))
+
+    return data
 
 
-
+def is_file_empty(f: TextIO) -> bool:
+    """Check if a file has a size of 0."""
+    f.seek(0, os.SEEK_END)
+    if not f.tell():
+        return True
+    f.seek(0)
+    return False
 
 
 #     def extract_failed_tests(self, pytest_output):

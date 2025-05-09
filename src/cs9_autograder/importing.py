@@ -108,14 +108,14 @@ class ignore_prints:
 def imported_modules(module_name: str, search_path: Path | str) -> set[str]:
     """Return the names of all modules imported by a script."""
 
-     finder = ModuleFinder(path=[str(search_path)])
-     module_path = module_to_path(module_name, search_path)
-     finder.run_script(str(module_path))
+    finder = ModuleFinder(path=[str(search_path)])
+    module_path = module_to_path(module_name, search_path)
+    finder.run_script(str(module_path))
 
-     modules = set(finder.modules.keys())
-     modules.remove('__main__')
+    modules = set(finder.modules.keys())
+    modules.remove('__main__')
 
-     return modules
+    return modules
 
 
 def module_to_path(module_name: str, search_path: Path | str) -> Path:

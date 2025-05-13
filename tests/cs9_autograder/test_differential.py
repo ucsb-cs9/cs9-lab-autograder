@@ -82,8 +82,8 @@ class TestDifferentialMethod(TestTester, TestCase):
                 return 3
 
         class Grader(DifferentialAutograder,
-                     correct_class=Correct, student_class=Student,
-                     method_name='my_method'):
+                     correct=Correct, student=Student,
+                     method='my_method'):
 
             test = d_method()
 
@@ -105,8 +105,8 @@ class TestDifferentialMethod(TestTester, TestCase):
                 return self.value
 
         class Grader(DifferentialAutograder,
-                     correct_class=Correct, student_class=Student,
-                     method_name='my_method'):
+                     correct=Correct, student=Student,
+                     method='my_method'):
 
             test = d_method((3,))
 
@@ -122,8 +122,8 @@ class TestDifferentialMethod(TestTester, TestCase):
                 return x - y
 
         class Grader(DifferentialAutograder,
-                     correct_class=Correct, student_class=Student,
-                     method_name='my_method'):
+                     correct=Correct, student=Student,
+                     method='my_method'):
 
             test = d_method(m_args=(1, 3,))
 
@@ -147,8 +147,8 @@ class TestDifferentialMethod(TestTester, TestCase):
 
 
         class Grader(DifferentialAutograder,
-                     correct_class=Correct, student_class=Student,
-                     method_name='my_method'):
+                     correct=Correct, student=Student,
+                     method='my_method'):
 
             test_0 = d_method((), {'a': 1},
                                           ('a'), {'z': True})

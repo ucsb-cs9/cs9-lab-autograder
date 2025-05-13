@@ -58,13 +58,13 @@ class d_returned(SmartDecorator):
 
 
 class DifferentialAutograder(Autograder):
-    def __init_subclass__(cls, /, correct_class, student_class, method_name,
+    def __init_subclass__(cls, /, correct, student, method,
                           weight=None,
                           **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.correct_class = correct_class
-        cls.student_class = student_class
-        cls.method_name = method_name
+        cls.correct_class = correct
+        cls.student_class = student
+        cls.method_name = method
         cls.default_weight = weight
 
 

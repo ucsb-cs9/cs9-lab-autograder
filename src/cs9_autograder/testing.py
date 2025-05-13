@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Any, Optional, Self, TextIO
+from typing import Any, cast, Optional, Self, TextIO
 
 from .importing import submission_path, module_to_path, path_to_module
 from .formatting import h_rule
@@ -15,12 +15,13 @@ from .autograder import Autograder
 
 
 class TestingAutograder(Autograder):
+    testing_log: Optional[TestingReport]
     __test__ = False  # tell pytest to ignore this class during test discovery
 
     def __init_subclass__(cls, /, weight=None, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls.testing_log: Optional[TestingReport] = None
+        cls.testing_log = None
 
     @classmethod
     def setUpClass(cls):
@@ -50,8 +51,8 @@ class TestingAutograder(Autograder):
         return cov_modules
 
     @classmethod
-    def _test_module(cls) -> set[str]:
-        """Get file names that we want to test the coverage for."""
+    def _test_module(cls) -> str:
+        """Get module that we want to test the coverage for."""
 
         mod = None
         for attr in vars(cls).values():
@@ -102,23 +103,23 @@ class t_module:
         return test_runner
 
 
-def run_test_file(test_file: Path | str):
-    report_log = run_pytest(test_file)
-
-    if not report_log.success:
-        print("======================== Issues while testing testFile.py ======================== \n\n")
-        print("Failing tests:")
-        for failing in report_log.failed_tests:
-            print(f'    {failing}')
-
-            print("It seems like one or more tests are failing.")
-            print("Ensure that there are no failing tests in the testFile.py file.")
-            print()
-
-            print(f"Pytest output:")
-
-            print(report_log.pretty)
-            h_rule()
+# def run_test_file(test_file: Path | str):
+#     report_log = run_pytest(test_file)
+#
+#     if not report_log.success:
+#         print("======================== Issues while testing testFile.py ======================== \n\n")
+#         print("Failing tests:")
+#         for failing in report_log.failed_tests:
+#             print(f'    {failing}')
+#
+#             print("It seems like one or more tests are failing.")
+#             print("Ensure that there are no failing tests in the testFile.py file.")
+#             print()
+#
+#             print(f"Pytest output:")
+#
+#             print(report_log.pretty)
+#             h_rule()
 
 
 RawTestingReport = list[dict]
@@ -136,8 +137,8 @@ def run_pytest(test_file: Path | str,
 
     returns captured stdout, raw log, and raw covrage report"""
 
-    with NamedTemporaryFile(delete_on_close=False) as log_file:
-        with NamedTemporaryFile(delete_on_close=False) as cov_report_file:
+    with NamedTemporaryFile(mode='w+', delete_on_close=False) as log_file:
+        with NamedTemporaryFile(mode='w+', delete_on_close=False) as cov_report_file:
 
             args = ['pytest', f'--report-log={log_file.name}']
 
@@ -153,10 +154,11 @@ def run_pytest(test_file: Path | str,
                     args, capture_output=True, text=True,
                     cwd=submission_path())
 
-            raw_report = parse_jsonl(log_file)
+            # the cast is just here to please mypy
+            raw_report = parse_jsonl(cast(TextIO, log_file))
 
             raw_cov = None
-            if cov_modules and not is_file_empty(cov_report_file):
+            if cov_modules and not is_file_empty(cast(TextIO, cov_report_file)):
                 raw_cov = json.load(cov_report_file)
 
             return result.stdout, raw_report, raw_cov
@@ -190,7 +192,7 @@ class TestingReport:
         raise ValueError("Cannot find exitstatus in pytest log.")
 
     @staticmethod
-    def read_failed_tests(log: TextIO) -> set[str]:
+    def read_failed_tests(log: list[dict]) -> set[str]:
         failed = set()
         for line in log:
             try:

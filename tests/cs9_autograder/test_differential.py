@@ -2,7 +2,7 @@
 from unittest import TestCase
 import unittest
 
-from cs9_autograder import (Autograder, d_returned, d_method,
+from cs9_autograder import (d_compare, d_returned, d_method,
                             DifferentialAutograder)
 
 from .mixins import TestTester
@@ -32,7 +32,7 @@ class TestDifferential(TestTester, TestCase):
 
         class Grader(DifferentialAutograder):
             @d_returned(correct_func, student_func,
-                        assertion=Autograder.assertAlmostEqual)
+                        assertion=DifferentialAutograder.assertAlmostEqual)
             def test_0(self, fn):
                 return fn()
 
@@ -84,6 +84,10 @@ class TestDifferential(TestTester, TestCase):
             @d_returned
             def test(self, fn):
                 return fn()
+
+        print(Grader.test)
+
+        self.assertTrue(callable(Grader.test))
 
         self.assertTestCaseFailure(Grader)
 
@@ -168,6 +172,77 @@ class TestDifferentialMethod(TestTester, TestCase):
                      method='my_method'):
 
             test_0 = d_method((), {'a': 1},
-                                          ('a'), {'z': True})
+                              ('a'), {'z': True})
 
         self.assertTestCaseNoFailure(Grader)
+
+
+class TestDCompare(TestTester, TestCase):
+    def test_d_compare_passing(self):
+        class Correct:
+            def __init__(self, value):
+                self.value = value
+
+            def __lt__(self, other):
+                return self.value < other.value
+
+        class Student:
+            def __init__(self, value):
+                self.value = value
+
+            def __lt__(self, other):
+                return self.value < other.value
+
+        class Grader(DifferentialAutograder,
+                     correct=Correct, student=Student,
+                     method='__lt__'):
+
+            test_0 = d_compare((1,), (2,))
+
+        self.assertTestCaseNoFailure(Grader)
+
+    def test_d_compare_failing(self):
+        class Correct:
+            def __init__(self, value):
+                self.value = value
+
+            def __lt__(self, other):
+                return self.value < other.value
+
+        class Student:
+            def __init__(self, value):
+                self.value = value
+
+            def __lt__(self, other):
+                return self.value >= other.value
+
+        class Grader(DifferentialAutograder,
+                     correct=Correct, student=Student,
+                     method='__lt__'):
+
+            test_0 = d_compare((1,), (2,))
+
+        self.assertTestCaseFailure(Grader)
+
+    def test_d_compare_bidirectional(self):
+        class Correct:
+            def __init__(self, value):
+                self.value = value
+
+            def __lt__(self, other):
+                return self.value < other.value
+
+        class Student:
+            def __init__(self, value):
+                self.value = value
+
+            def __lt__(self, other):
+                return self.value == other.value
+
+        class Grader(DifferentialAutograder,
+                     correct=Correct, student=Student,
+                     method='__lt__'):
+
+            test_0 = d_compare((1,), (1,))
+
+        self.assertTestCaseFailure(Grader)

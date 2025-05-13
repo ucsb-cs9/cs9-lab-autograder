@@ -63,9 +63,6 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return True
 
-        def normalize(text):
-            return text.strip()
-
         class Grader(Autograder):
             d_returned(correct_func, student_func,
                        func=lambda _, f: f())

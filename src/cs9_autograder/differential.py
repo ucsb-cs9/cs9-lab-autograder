@@ -8,25 +8,49 @@ from .smart_decorator import SmartDecorator
 
 
 class d_returned(SmartDecorator):
-    def decorator(self, correct: Any = None, student: Any = None,
-                  assertion: Optional[Callable[..., None]] = None,
-                  normalize: Optional[Callable[[Any], Any]] = None,
-                  msg: Optional[str] = None,
-                  weight: Optional[int] = None):
+    def init(self, correct: Any = None, student: Any = None,
+                 assertion: Optional[Callable[..., None]] = None,
+                 normalize: Optional[Callable[[Any], Any]] = None,
+                 msg: Optional[str] = None,
+                 weight: Optional[int] = None):
 
+        super().init()
+
+        print("init", correct, student)
+
+        self._correct = correct
+        self._student = student
+        self.assertion = assertion
+        self.normalize = normalize
+        self.msg = msg
+        self.weight = weight
+
+    @property
+    def correct(self):
+        return self._correct if self._correct else self.instance.correct
+
+    @property
+    def student(self):
+        return self._student if self._student else self.instance.student
+
+    def decorator(self):
+        print("decorator")
         def wrapper(this):
-            expected = self.decorated(self, correct)
-            actual = self.decorated(self, student)
+            print("wrapper", self.correct, self.student)
+            expected = self.decorated(this, self.correct)
+            actual = self.decorated(this, self.student)
 
-            if normalize:
-                expected = normalize(expected)
-                actual = normalize(actual)
+            if self.normalize:
+                expected = self.normalize(expected)
+                actual = self.normalize(actual)
 
-            if assertion:
-                assertion(this, expected, actual, msg=msg)
+            print("Before assertion")
+
+            if self.assertion:
+                self.assertion(this, expected, actual, msg=self.msg)
 
             else:
-                this.assertEqual(expected, actual, msg=msg)
+                this.assertEqual(expected, actual, msg=self.msg)
         return wrapper
 
 
@@ -58,14 +82,20 @@ class d_returned(SmartDecorator):
 
 
 class DifferentialAutograder(Autograder):
-    def __init_subclass__(cls, /, correct, student, method,
+    def __init_subclass__(cls, /, correct: Any = None, student: Any = None,
+                          method: Optional[str] = None,
                           weight=None,
                           **kwargs):
+
         super().__init_subclass__(**kwargs)
-        cls.correct_class = correct
-        cls.student_class = student
-        cls.method_name = method
-        cls.default_weight = weight
+
+        # We don't want the correct and student functions to get bound to cls,
+        # so we have to wrap them in staticmethod
+        cls.correct = staticmethod(correct)
+        cls.student = staticmethod(student)
+
+        cls.method = method
+        cls.weight = weight
 
 
 class d_method:
@@ -81,10 +111,10 @@ class d_method:
         self.m_kwargs = m_kwargs if m_kwargs else {}
 
     def __get__(self, instance, owner):
-        @d_returned(owner.correct_class, owner.student_class)
+        @d_returned(owner.correct, owner.student)
         def runner(grader_self, tested_class):
             obj = tested_class(*self.ctor_args, **self.ctor_kwargs)
-            tested_method = getattr(obj, owner.method_name)
+            tested_method = getattr(obj, owner.method)
             return tested_method(*self.m_args, **self.m_kwargs)
 
         # we have to wrap the runner and pass the instance because our

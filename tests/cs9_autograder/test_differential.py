@@ -16,7 +16,7 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return False
 
-        class Grader(Autograder):
+        class Grader(DifferentialAutograder):
             @d_returned(correct_func, student_func)
             def test(self, fn):
                 return fn()
@@ -30,7 +30,7 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return 0.1 * 30
 
-        class Grader(Autograder):
+        class Grader(DifferentialAutograder):
             @d_returned(correct_func, student_func,
                         assertion=Autograder.assertAlmostEqual)
             def test_0(self, fn):
@@ -48,7 +48,7 @@ class TestDifferential(TestTester, TestCase):
         def normalize(text):
             return text.strip()
 
-        class Grader(Autograder):
+        class Grader(DifferentialAutograder):
             @d_returned(correct_func, student_func,
                         normalize=normalize)
             def test_0(self, fn):
@@ -64,11 +64,28 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return True
 
-        class Grader(Autograder):
-            d_returned(correct_func, student_func,
+        class Grader(DifferentialAutograder):
+            test = d_returned(correct_func, student_func,
                        func=lambda _, f: f())
 
         self.assertTestCaseNoFailure(Grader)
+
+    def test_d_returned_class_kwarg(self):
+        """Test that the correct and student can be defined in the class
+        instead."""
+        def correct_func():
+            return False
+
+        def student_func():
+            return True
+
+        class Grader(DifferentialAutograder, correct=correct_func,
+                     student=student_func):
+            @d_returned
+            def test(self, fn):
+                return fn()
+
+        self.assertTestCaseFailure(Grader)
 
 
 class TestDifferentialMethod(TestTester, TestCase):

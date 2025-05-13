@@ -57,6 +57,7 @@ class TestDifferential(TestTester, TestCase):
         self.assertTestCaseNoFailure(Grader)
 
     def test_diff_func_arg(self):
+        """Test the func argument for d_returned"""
         def correct_func():
             return True
 

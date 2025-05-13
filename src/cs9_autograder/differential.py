@@ -4,42 +4,56 @@ from typing import Any, Optional, Union
 
 
 from .autograder import Autograder
+from .smart_decorator import SmartDecorator
 
 
-def d_returned(correct_items: Any, student_items: Any,
-                 assertion: Optional[Callable[..., None]] = None,
-                 normalize: Optional[Callable[[Any], Any]] = None,
-                 msg: Optional[str] = None):
-    """A decorator to which converts a function into a differential test.
+class d_returned(SmartDecorator):
+    def decorator(self, correct: Any = None, student: Any = None,
+                  assertion: Optional[Callable[..., None]] = None,
+                  normalize: Optional[Callable[[Any], Any]] = None,
+                  msg: Optional[str] = None,
+                  weight: Optional[int] = None):
 
-    The decorated function is called twice. First with correct_items, then
-    with student_items.
-    The returned values of the decorated function are then compared to
-    determine if the student's implementation is correct.
-
-    assertion: The method to call instead of assertEqual
-    normalize: A function which normalizes the two returned values before
-        comparison.
-    msg: The msg to be passed to the assertion method.
-    """
-
-    def decorator(wrapped_method):
-        def wrapper(self):
-            expected = wrapped_method(self, correct_items)
-            actual = wrapped_method(self, student_items)
+        def wrapper(this):
+            expected = self.decorated(self, correct)
+            actual = self.decorated(self, student)
 
             if normalize:
                 expected = normalize(expected)
                 actual = normalize(actual)
 
             if assertion:
-                assertion(self, expected, actual, msg=msg)
+                assertion(this, expected, actual, msg=msg)
 
             else:
-                self.assertEqual(expected, actual, msg=msg)
-
+                this.assertEqual(expected, actual, msg=msg)
         return wrapper
-    return decorator
+
+
+
+# def d_returned(correct_items: Any, student_items: Any,
+#                  assertion: Optional[Callable[..., None]] = None,
+#                  normalize: Optional[Callable[[Any], Any]] = None,
+#                  msg: Optional[str] = None):
+#     """A decorator to which converts a function into a differential test.
+#
+#     The decorated function is called twice. First with correct_items, then
+#     with student_items.
+#     The returned values of the decorated function are then compared to
+#     determine if the student's implementation is correct.
+#
+#     assertion: The method to call instead of assertEqual
+#     normalize: A function which normalizes the two returned values before
+#         comparison.
+#     msg: The msg to be passed to the assertion method.
+#     """
+#
+#     def decorator(wrapped_method):
+#         def wrapper(self):
+#
+#
+#         return wrapper
+#     return decorator
 
 
 

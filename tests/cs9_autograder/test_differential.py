@@ -56,6 +56,22 @@ class TestDifferential(TestTester, TestCase):
 
         self.assertTestCaseNoFailure(Grader)
 
+    def test_diff_func_arg(self):
+        def correct_func():
+            return True
+
+        def student_func():
+            return True
+
+        def normalize(text):
+            return text.strip()
+
+        class Grader(Autograder):
+            d_returned(correct_func, student_func,
+                       func=lambda _, f: f())
+
+        self.assertTestCaseNoFailure(Grader)
+
 
 class TestDifferentialMethod(TestTester, TestCase):
     def test_d_method(self):

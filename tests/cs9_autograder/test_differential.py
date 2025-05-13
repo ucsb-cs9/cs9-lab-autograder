@@ -2,8 +2,8 @@
 from unittest import TestCase
 import unittest
 
-from cs9_autograder import (Autograder, differential, differential_method,
-                            DifferentialMethodAutograder)
+from cs9_autograder import (Autograder, d_returned, d_method,
+                            DifferentialAutograder)
 
 from .mixins import TestTester
 
@@ -17,7 +17,7 @@ class TestDifferential(TestTester, TestCase):
             return False
 
         class Grader(Autograder):
-            @differential(correct_func, student_func)
+            @d_returned(correct_func, student_func)
             def test(self, fn):
                 return fn()
 
@@ -31,8 +31,8 @@ class TestDifferential(TestTester, TestCase):
             return 0.1 * 30
 
         class Grader(Autograder):
-            @differential(correct_func, student_func,
-                          assertion=Autograder.assertAlmostEqual)
+            @d_returned(correct_func, student_func,
+                        assertion=Autograder.assertAlmostEqual)
             def test_0(self, fn):
                 return fn()
 
@@ -49,8 +49,8 @@ class TestDifferential(TestTester, TestCase):
             return text.strip()
 
         class Grader(Autograder):
-            @differential(correct_func, student_func,
-                          normalize=normalize)
+            @d_returned(correct_func, student_func,
+                        normalize=normalize)
             def test_0(self, fn):
                 return fn()
 
@@ -58,7 +58,7 @@ class TestDifferential(TestTester, TestCase):
 
 
 class TestDifferentialMethod(TestTester, TestCase):
-    def test_differential_method(self):
+    def test_d_method(self):
         class Correct:
             def my_method(self):
                 return 3
@@ -67,15 +67,15 @@ class TestDifferentialMethod(TestTester, TestCase):
             def my_method(self):
                 return 3
 
-        class Grader(DifferentialMethodAutograder,
+        class Grader(DifferentialAutograder,
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            test = differential_method()
+            test = d_method()
 
         self.assertTestCaseNoFailure(Grader)
 
-    def test_differential_method_ctor_args(self):
+    def test_d_method_ctor_args(self):
         class Correct:
             def __init__(self, value):
                 self.value = value
@@ -90,15 +90,15 @@ class TestDifferentialMethod(TestTester, TestCase):
             def my_method(self):
                 return self.value
 
-        class Grader(DifferentialMethodAutograder,
+        class Grader(DifferentialAutograder,
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            test = differential_method((3,))
+            test = d_method((3,))
 
         self.assertTestCaseNoFailure(Grader)
 
-    def test_differential_method_m_args(self):
+    def test_d_method_m_args(self):
         class Correct:
             def my_method(self, x, y):
                 return x + y
@@ -107,15 +107,15 @@ class TestDifferentialMethod(TestTester, TestCase):
             def my_method(self, x, y):
                 return x - y
 
-        class Grader(DifferentialMethodAutograder,
+        class Grader(DifferentialAutograder,
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            test = differential_method(m_args=(1, 3,))
+            test = d_method(m_args=(1, 3,))
 
         self.assertTestCaseFailure(Grader)
 
-    def test_differential_method_args_and_kwargs(self):
+    def test_d_method_args_and_kwargs(self):
         class Correct:
             def __init__(self, a=None):
                 self.a = a
@@ -132,11 +132,11 @@ class TestDifferentialMethod(TestTester, TestCase):
                 return f'1 {x} True'
 
 
-        class Grader(DifferentialMethodAutograder,
+        class Grader(DifferentialAutograder,
                      correct_class=Correct, student_class=Student,
                      method_name='my_method'):
 
-            test_0 = differential_method((), {'a': 1},
+            test_0 = d_method((), {'a': 1},
                                           ('a'), {'z': True})
 
         self.assertTestCaseNoFailure(Grader)

@@ -6,7 +6,7 @@ from typing import Any, Optional, Union
 from .autograder import Autograder
 
 
-def differential(correct_items: Any, student_items: Any,
+def d_returned(correct_items: Any, student_items: Any,
                  assertion: Optional[Callable[..., None]] = None,
                  normalize: Optional[Callable[[Any], Any]] = None,
                  msg: Optional[str] = None):
@@ -43,7 +43,7 @@ def differential(correct_items: Any, student_items: Any,
 
 
 
-class DifferentialMethodAutograder(Autograder):
+class DifferentialAutograder(Autograder):
     def __init_subclass__(cls, /, correct_class, student_class, method_name,
                           weight=None,
                           **kwargs):
@@ -54,7 +54,7 @@ class DifferentialMethodAutograder(Autograder):
         cls.default_weight = weight
 
 
-class differential_method:
+class d_method:
     def __init__(self, ctor_args: Optional[tuple] = None,
                  ctor_kwargs: Optional[Mapping[str, Any]] = None,
                  m_args: Optional[tuple] = None,
@@ -67,7 +67,7 @@ class differential_method:
         self.m_kwargs = m_kwargs if m_kwargs else {}
 
     def __get__(self, instance, owner):
-        @differential(owner.correct_class, owner.student_class)
+        @d_returned(owner.correct_class, owner.student_class)
         def runner(grader_self, tested_class):
             obj = tested_class(*self.ctor_args, **self.ctor_kwargs)
             tested_method = getattr(obj, owner.method_name)

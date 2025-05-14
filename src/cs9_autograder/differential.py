@@ -4,15 +4,7 @@ from typing import Any, Callable, Optional, Union
 
 
 from .autograder import Autograder
-from .smart_decorator import SmartDecorator, TestDecorator
-
-
-
-
-
-class TestItem:
-    pass
-
+from .smart_decorator import SmartDecorator, TestItemDecorator
 
 
 class DifferentialSharedVars:
@@ -59,7 +51,7 @@ class DifferentialSharedVars:
             self.owner = owner
 
 
-class d_returned(SmartDecorator):
+class d_returned(TestItemDecorator):
     """Run a template function with a correct object and student object and
     compare the value returned from the template function."""
 
@@ -68,7 +60,7 @@ class d_returned(SmartDecorator):
              assertion: Optional[Callable[..., None]] = None,
              normalize: Optional[Callable[[Any], Any]] = None,
              msg: Optional[str] = None,
-             weight: Optional[int] = None, **kwargs):
+             **kwargs):
 
         self.shared_vars = DifferentialSharedVars(
                 correct=correct,
@@ -77,7 +69,6 @@ class d_returned(SmartDecorator):
         self.assertion = assertion
         self.normalize = normalize
         self.msg = msg
-        self.weight = weight
 
     def decorator(self):
         print("decorator")

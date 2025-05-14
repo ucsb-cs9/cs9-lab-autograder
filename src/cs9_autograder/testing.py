@@ -16,7 +16,6 @@ from .testing_report import (CoverageReport, RawCoverageReport,
                              TestingReport)
 
 
-
 class t_coverage:
     """A class descriptor which generates a coverage test."""
     def __init__(self, module_name: str):

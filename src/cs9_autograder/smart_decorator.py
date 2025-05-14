@@ -1,6 +1,8 @@
 from enum import auto, Enum
 from abc import ABC, abstractmethod
 
+from .test_item import TestItem
+
 
 SENTINEL = object()
 
@@ -8,6 +10,7 @@ class Modes(Enum):
     RAW_DECORATOR = auto()
     COMPOSED = auto()
     KWARGS_DECORATOR = auto()
+
 
 class SmartDecorator(ABC):
     def __init_subclass__(cls, **kwargs):
@@ -88,5 +91,10 @@ class SmartDecoratorWrapper:
         return self.func(*args, **kwargs)
 
 
-class TestDecorator(SmartDecorator):
-    pass
+class TestItemDecorator(SmartDecorator, TestItem):
+    """A class which inherits from both SmartDecorator and TestItem.
+    This is provided because SmartDecorator inheritance is tricky."""
+
+    def __init__(self, *args, weight=None, **kwargs):
+        SmartDecorator.__init__(self, *args, **kwargs)
+        TestItem.__init__(self, weight=weight)

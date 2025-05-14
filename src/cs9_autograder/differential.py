@@ -36,7 +36,7 @@ class TestItem:
 
 
 
-class DifferentialSharedVars(TestItem):
+class DifferentialSharedVars:
     def __init__(self, correct=None, student=None, method=None):
         self.instance = None
         self.owner = None

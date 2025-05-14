@@ -31,12 +31,9 @@ class d_returned(TestItemDecorator):
         self.msg = msg
 
     def decorator(self):
-        print("decorator")
         def wrapper(this):
             expected = self.decorated(this, self.correct)
             actual = self.decorated(this, self.student)
-
-            print(expected, actual)
 
             if self.normalize:
                 expected = self.normalize(expected)
@@ -50,7 +47,6 @@ class d_returned(TestItemDecorator):
         return wrapper
 
     def __get__(cls, instance, owner=None):
-        print("GETFF")
         return super().__get__(instance, owner)
 
 
@@ -83,7 +79,7 @@ class d_compare(TestItem):
     x_kwargs: dict[str, Any]
     y_kwargs: dict[str, Any]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, bidirectional=False, **kwargs):
 
         super().__init__(**kwargs)
 
@@ -100,6 +96,8 @@ class d_compare(TestItem):
                              "(x_args, y_args) or "
                              "(x_args, x_kwargs, y_args, y_kwargs).")
 
+        self.bidirectional = bidirectional
+
     def __get__(self, instance, owner):
         super().__get__(instance, owner)
 
@@ -110,9 +108,15 @@ class d_compare(TestItem):
 
             method_name = self.method
 
-            method = getattr(obj_x, method_name)
+            x_method = getattr(obj_x, method_name)
 
-            return method(obj_y)
+            if self.bidirectional:
+                y_method = getattr(obj_y, method_name)
+
+                return (x_method(obj_y), y_method(obj_x))
+
+            else:
+                return x_method(obj_y)
 
         # we have to wrap the runner and pass the instance because our
         # returned function isn't bound as a method by default

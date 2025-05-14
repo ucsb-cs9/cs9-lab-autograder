@@ -237,12 +237,11 @@ class TestDCompare(TestTester, TestCase):
                 self.value = value
 
             def __lt__(self, other):
-                return self.value == other.value
+                return True
 
-        class Grader(Autograder,
-                     correct=Correct, student=Student,
+        class Grader(Autograder, correct=Correct, student=Student,
                      method='__lt__'):
 
-            test_0 = d_compare((1,), (1,))
+            test_0 = d_compare((1,), (2,), bidirectional=True)
 
         self.assertTestCaseFailure(Grader)

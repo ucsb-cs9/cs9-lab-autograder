@@ -19,6 +19,13 @@ class d_returned(TestItemDecorator):
              msg: Optional[str] = None,
              **kwargs):
 
+        # set correct and student for TestItem
+        # if they were given as positional argument
+        if correct:
+            self._correct = correct
+        if student:
+            self._student = student
+
         self.assertion = assertion
         self.normalize = normalize
         self.msg = msg
@@ -42,7 +49,7 @@ class d_returned(TestItemDecorator):
                 this.assertEqual(expected, actual, msg=self.msg)
         return wrapper
 
-    def __get__(self, instance, owner=None):
+    def __get__(cls, instance, owner=None):
         print("GETFF")
         return super().__get__(instance, owner)
 
@@ -101,7 +108,7 @@ class d_compare(TestItem):
             obj_x = tested_class(*self.x_args, **self.x_kwargs)
             obj_y = tested_class(*self.y_args, **self.y_kwargs)
 
-            method_name = self.shared_vars.method
+            method_name = self.method
 
             method = getattr(obj_x, method_name)
 

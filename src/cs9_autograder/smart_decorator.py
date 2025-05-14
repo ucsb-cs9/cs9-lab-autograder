@@ -96,13 +96,17 @@ class TestItemDecorator(SmartDecorator, TestItem):
     This is provided because SmartDecorator inheritance is tricky."""
 
     def __init__(self, *args, **kwargs):
-        SmartDecorator.__init__(self, *args, **kwargs)
-
         test_item_ctor_fields = ['correct', 'student', 'method', 'weight']
         test_item_kwargs = {k: kwargs[k] for k in test_item_ctor_fields
                             if k in kwargs}
         print(kwargs, test_item_kwargs)
         TestItem.__init__(self, test_item_kwargs)
+
+        # initialize SmartDecorator last, so that Parent.init() is called
+        # at the very end.
+        # The parent may initialize some members of SmartDecorator that were
+        # missed due to them being provided as positional arguments.
+        SmartDecorator.__init__(self, *args, **kwargs)
 
     def __set_name__(cls, owner, name):
         super().__set_name__(owner, name)

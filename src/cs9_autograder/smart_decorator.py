@@ -55,7 +55,6 @@ class SmartDecorator(ABC):
         self.init(*args, **kwargs)
 
     def __call__(self, _first=SENTINEL, *args, **kwargs):
-        print(self.mode)
         if self.mode == Modes.RAW_DECORATOR or self.mode == Modes.COMPOSED:
             if _first is not SENTINEL:
                 # we'll assume _func was a posional argument
@@ -99,7 +98,6 @@ class TestItemDecorator(SmartDecorator, TestItem):
         test_item_ctor_fields = ['correct', 'student', 'method', 'weight']
         test_item_kwargs = {k: kwargs[k] for k in test_item_ctor_fields
                             if k in kwargs}
-        print(kwargs, test_item_kwargs)
         TestItem.__init__(self, test_item_kwargs)
 
         # initialize SmartDecorator last, so that Parent.init() is called
@@ -112,6 +110,5 @@ class TestItemDecorator(SmartDecorator, TestItem):
         super().__set_name__(owner, name)
 
     def __get__(cls, instance, owner=None):
-        print("GET")
         TestItem.__get__(cls, instance, owner)
         return SmartDecorator.__get__(cls, instance, owner)

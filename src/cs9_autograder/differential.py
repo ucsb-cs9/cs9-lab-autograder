@@ -5,50 +5,7 @@ from typing import Any, Callable, Optional, Union
 
 from .autograder import Autograder
 from .smart_decorator import SmartDecorator, TestItemDecorator
-
-
-class DifferentialSharedVars:
-    def __init__(self, correct=None, student=None, method=None):
-        self.instance = None
-        self.owner = None
-
-        self._correct = correct
-        self._student = student
-        self._method = method
-
-    @property
-    def correct(self):
-        return self._get_var('correct')
-
-    @property
-    def student(self):
-        return self._get_var('student')
-
-    @property
-    def method(self):
-        return self._get_var('method')
-
-    def _get_var(self, var_name):
-        search_objs = [(self, f'_{var_name}'),
-                       (self.instance, var_name),
-                       (self.owner, var_name)]
-        for obj, name in search_objs:
-            try:
-                if var := getattr(obj, name):
-                    return var
-            except AttributeError:
-                pass
-
-        raise AttributeError(f'Cannot find attribute {var_name}.')
-
-    def on_set_name(self, owner, _):
-        self.owner = owner
-
-    def on_get(self, instance, owner=None):
-        """Should be called from the __get__ method."""
-        self.instance = instance
-        if owner:
-            self.owner = owner
+from .test_item import TestItem
 
 
 class d_returned(TestItemDecorator):
@@ -62,10 +19,6 @@ class d_returned(TestItemDecorator):
              msg: Optional[str] = None,
              **kwargs):
 
-        self.shared_vars = DifferentialSharedVars(
-                correct=correct,
-                student=student)
-
         self.assertion = assertion
         self.normalize = normalize
         self.msg = msg
@@ -73,8 +26,8 @@ class d_returned(TestItemDecorator):
     def decorator(self):
         print("decorator")
         def wrapper(this):
-            expected = self.decorated(this, self.shared_vars.correct)
-            actual = self.decorated(this, self.shared_vars.student)
+            expected = self.decorated(this, self.correct)
+            actual = self.decorated(this, self.student)
 
             print(expected, actual)
 
@@ -89,11 +42,8 @@ class d_returned(TestItemDecorator):
                 this.assertEqual(expected, actual, msg=self.msg)
         return wrapper
 
-    def __set_name__(self, owner, name):
-        self.shared_vars.on_set_name(owner, name)
-
     def __get__(self, instance, owner=None):
-        self.shared_vars.on_get(instance, owner)
+        print("GETFF")
         return super().__get__(instance, owner)
 
 
@@ -121,17 +71,14 @@ class d_method:
         return lambda: runner(instance)
 
 
-class d_compare:
+class d_compare(TestItem):
     """Compare two items"""
     x_kwargs: dict[str, Any]
     y_kwargs: dict[str, Any]
 
-    def __init__(self, *args,
-                 correct: Any = None, student: Any = None,
-                 method: Optional[str] = None):
+    def __init__(self, *args, **kwargs):
 
-        self.shared_vars = DifferentialSharedVars(
-                correct=correct, student=student, method=method)
+        super().__init__(**kwargs)
 
         if len(args) == 2:
             self.x_args, self.y_args = args
@@ -146,11 +93,10 @@ class d_compare:
                              "(x_args, y_args) or "
                              "(x_args, x_kwargs, y_args, y_kwargs).")
 
-
     def __get__(self, instance, owner):
-        self.shared_vars.on_get(instance, owner)
+        super().__get__(instance, owner)
 
-        @d_returned(self.shared_vars.correct, self.shared_vars.student)
+        @d_returned(self.correct, self.student)
         def runner(grader_self, tested_class):
             obj_x = tested_class(*self.x_args, **self.x_kwargs)
             obj_y = tested_class(*self.y_args, **self.y_kwargs)
@@ -165,5 +111,5 @@ class d_compare:
         # returned function isn't bound as a method by default
         return lambda: runner(instance)
 
-    def __set_name__(self, owner, name):
-        self.shared_vars.on_set_name(owner, name)
+    def __get_name__(self, owner, name):
+        super().__get_name__(self, owner, name)

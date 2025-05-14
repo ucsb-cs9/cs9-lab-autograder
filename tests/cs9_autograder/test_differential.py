@@ -3,7 +3,7 @@ from unittest import TestCase
 import unittest
 
 from cs9_autograder import (d_compare, d_returned, d_method,
-                            DifferentialAutograder)
+                            Autograder)
 
 from .mixins import TestTester
 
@@ -16,7 +16,7 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return False
 
-        class Grader(DifferentialAutograder):
+        class Grader(Autograder):
             @d_returned(correct_func, student_func)
             def test(self, fn):
                 return fn()
@@ -30,9 +30,9 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return 0.1 * 30
 
-        class Grader(DifferentialAutograder):
+        class Grader(Autograder):
             @d_returned(correct_func, student_func,
-                        assertion=DifferentialAutograder.assertAlmostEqual)
+                        assertion=Autograder.assertAlmostEqual)
             def test_0(self, fn):
                 return fn()
 
@@ -48,7 +48,7 @@ class TestDifferential(TestTester, TestCase):
         def normalize(text):
             return text.strip()
 
-        class Grader(DifferentialAutograder):
+        class Grader(Autograder):
             @d_returned(correct_func, student_func,
                         normalize=normalize)
             def test_0(self, fn):
@@ -64,7 +64,7 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return True
 
-        class Grader(DifferentialAutograder):
+        class Grader(Autograder):
             test = d_returned(correct_func, student_func,
                        func=lambda _, f: f())
 
@@ -79,7 +79,7 @@ class TestDifferential(TestTester, TestCase):
         def student_func():
             return True
 
-        class Grader(DifferentialAutograder, correct=correct_func,
+        class Grader(Autograder, correct=correct_func,
                      student=student_func):
             @d_returned
             def test(self, fn):
@@ -102,7 +102,7 @@ class TestDifferentialMethod(TestTester, TestCase):
             def my_method(self):
                 return 3
 
-        class Grader(DifferentialAutograder,
+        class Grader(Autograder,
                      correct=Correct, student=Student,
                      method='my_method'):
 
@@ -125,7 +125,7 @@ class TestDifferentialMethod(TestTester, TestCase):
             def my_method(self):
                 return self.value
 
-        class Grader(DifferentialAutograder,
+        class Grader(Autograder,
                      correct=Correct, student=Student,
                      method='my_method'):
 
@@ -142,7 +142,7 @@ class TestDifferentialMethod(TestTester, TestCase):
             def my_method(self, x, y):
                 return x - y
 
-        class Grader(DifferentialAutograder,
+        class Grader(Autograder,
                      correct=Correct, student=Student,
                      method='my_method'):
 
@@ -167,7 +167,7 @@ class TestDifferentialMethod(TestTester, TestCase):
                 return f'1 {x} True'
 
 
-        class Grader(DifferentialAutograder,
+        class Grader(Autograder,
                      correct=Correct, student=Student,
                      method='my_method'):
 
@@ -193,7 +193,7 @@ class TestDCompare(TestTester, TestCase):
             def __lt__(self, other):
                 return self.value < other.value
 
-        class Grader(DifferentialAutograder,
+        class Grader(Autograder,
                      correct=Correct, student=Student,
                      method='__lt__'):
 
@@ -216,7 +216,7 @@ class TestDCompare(TestTester, TestCase):
             def __lt__(self, other):
                 return self.value >= other.value
 
-        class Grader(DifferentialAutograder,
+        class Grader(Autograder,
                      correct=Correct, student=Student,
                      method='__lt__'):
 
@@ -239,7 +239,7 @@ class TestDCompare(TestTester, TestCase):
             def __lt__(self, other):
                 return self.value == other.value
 
-        class Grader(DifferentialAutograder,
+        class Grader(Autograder,
                      correct=Correct, student=Student,
                      method='__lt__'):
 

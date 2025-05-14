@@ -9,27 +9,6 @@ from .smart_decorator import SmartDecorator, TestDecorator
 
 
 
-class DifferentialAutograder(Autograder):
-    correct: Any
-    student: Any
-    method: Optional[str]
-    weight: Optional[int]
-
-    def __init_subclass__(cls, /, correct: Any = None, student: Any = None,
-                          method: Optional[str] = None,
-                          weight=None,
-                          **kwargs):
-
-        super().__init_subclass__(**kwargs)
-
-        # We don't want the correct and student functions to get bound to cls,
-        # so we have to wrap them in staticmethod
-        cls.correct = staticmethod(correct)
-        cls.student = staticmethod(student)
-
-        cls.method = method
-        cls.weight = weight
-
 
 class TestItem:
     pass

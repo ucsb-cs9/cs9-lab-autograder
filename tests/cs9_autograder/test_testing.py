@@ -8,10 +8,10 @@ from .mixins import (SubmissionPathRestorer, TestTester)
 
 from cs9_autograder import (Autograder, t_coverage, set_submission_path,
                             t_module,
-                            TestingAutograder, TestingReport)
+                            Autograder, TestingReport)
 
 
-class TestTestingAutograder(TestTester, SubmissionPathRestorer, TestCase):
+class TestAutograder(TestTester, SubmissionPathRestorer, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -20,21 +20,21 @@ class TestTestingAutograder(TestTester, SubmissionPathRestorer, TestCase):
         set_submission_path(self.test_path)
 
     def test_testing_autograder_coverage_failure(self):
-        class Grader(TestingAutograder):
+        class Grader(Autograder):
             test_test_file = t_module('testFile')
             test_coverage = t_coverage('failure_module')
 
         self.assertTestCaseFailure(Grader)
 
     def test_testing_autograder_coverage_success(self):
-        class Grader(TestingAutograder):
+        class Grader(Autograder):
             test_test_file = t_module('testFile')
             test_coverage = t_coverage('success_module')
 
         self.assertTestCaseNoFailure(Grader)
 
     def test_testing_autograder_coverage_no_tests(self):
-        class Grader(TestingAutograder):
+        class Grader(Autograder):
             test_test_file = t_module('testFile')
             test_coverage = t_coverage('no_tests_module')
 
@@ -43,7 +43,7 @@ class TestTestingAutograder(TestTester, SubmissionPathRestorer, TestCase):
     def test_testing_autograder_cov_multiple_modules(self):
         """This is to test that run_pytest is building its `--cov` arguments
         correctly"""
-        class Grader(TestingAutograder):
+        class Grader(Autograder):
             test_test_file = t_module('testFile')
             test_cov_0 = t_coverage('failure_module')
             test_cov_1 = t_coverage('no_tests_module')
@@ -60,7 +60,7 @@ class TestTModule(TestTester, SubmissionPathRestorer, TestCase):
         set_submission_path(self.test_path)
 
     def test_test_module_failing(self):
-        class Grader(TestingAutograder):
+        class Grader(Autograder):
             test = t_module('failing')
 
         self.assertTestCaseFailure(Grader)

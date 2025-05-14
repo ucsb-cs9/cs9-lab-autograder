@@ -6,3 +6,17 @@ from .importing import (ignore_prints, import_from_file, import_student,
                         set_submission_path,
                         submission_path)
 from .testing import (t_coverage, t_module, TestingReport)
+
+
+# from the gradescope autograder
+class weight(object):
+    """Simple decorator to add a __weight__ property to a function
+
+    Usage: @weight(3.0)
+    """
+    def __init__(self, val):
+        self.val = val
+
+    def __call__(self, func):
+        func.__weight__ = self.val
+        return func

@@ -3,6 +3,7 @@ from .differential import (d_compare, d_returned, d_method)
 from .importing import (ignore_prints, import_from_file, import_student,
                         imported_modules,
                         module_to_path, path_to_module,
+                        prepend_import_path,
                         set_submission_path,
                         submission_path)
 from .testing import (t_coverage, t_module, TestingReport)

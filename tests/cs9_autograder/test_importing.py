@@ -1,7 +1,9 @@
 from io import StringIO
 from contextlib import redirect_stdout
+import copy
 import os
 from pathlib import Path
+import sys
 from typing import Optional
 
 import unittest
@@ -10,6 +12,7 @@ from unittest import TestCase
 from cs9_autograder import (Autograder, ignore_prints, importing, import_student,
                             imported_modules,
                             module_to_path, path_to_module,
+                            prepend_import_path,
                             set_submission_path, submission_path)
 
 from .mixins import (SubmissionPathRestorer, TestTester, restore_submission_path_config,
@@ -125,3 +128,18 @@ class TestPathToModule(TestCase):
         actual = path_to_module(search_path / 'my_module.py', search_path)
         expected = 'my_module'
         self.assertEqual(expected, actual)
+
+
+class PrependImportPath(TestCase):
+    def search_path(self):
+        script_dir = Path(__file__).resolve().parent
+        return script_dir / 'prepend_import_path_test_files'
+
+    def test_prepend_import_path(self):
+        original_path = copy.copy(sys.path)
+
+        with prepend_import_path(self.search_path()):
+            import good_module
+
+        self.assertTrue(good_module.good_function)
+        self.assertListEqual(original_path, sys.path)

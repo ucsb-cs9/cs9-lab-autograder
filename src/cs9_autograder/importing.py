@@ -5,10 +5,12 @@ import importlib.util
 import importlib.machinery
 from modulefinder import ModuleFinder
 import os
+import os.path
 from pathlib import Path
 import sys
 from types import ModuleType
 from typing import cast, Optional
+import warnings
 
 _DEFAULT_SUBMISSION_PATH = Path('/autograder/submission')
 _SUBMISSION_PATH: Optional[Path] = None
@@ -70,6 +72,23 @@ def import_student(module_name: str) -> Optional[ModuleType]:
         except Exception as err:
             FAILED_IMPORTS.add(FailedImport(module_filename, err, False))
             return None
+
+
+@contextmanager
+def prepend_import_path(import_path: Path | str):
+    import_path = str(import_path)
+    import_path = os.path.realpath(import_path, strict=True)
+    try:
+        sys.path.insert(1, import_path)
+        yield None
+    finally:
+        if sys.path[1] == import_path:
+            del sys.path[1]
+        else:
+            warnings.warn(f'Did not delete `{import_path}` from sys.path '
+                          'because it was no longer at index 1.',
+                          RuntimeWarning)
+
 
 
 def import_from_file(path: Path | str, module_name: str) -> ModuleType:

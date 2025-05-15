@@ -148,7 +148,6 @@ class d_compare_pairs(TestItem):
                 rhs_args, rhs_kwargs = rhs
                 compare = d_compare(lhs_args, lhs_kwargs, rhs_args, rhs_kwargs,
                                     _outer_test_item=self)
-                print(compare)
                 compare(instance)
 
         # we have to wrap the runner and pass the instance because our

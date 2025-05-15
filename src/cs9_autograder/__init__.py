@@ -1,5 +1,5 @@
 from .autograder import Autograder
-from .differential import (d_compare, d_returned, d_method)
+from .differential import (d_compare, d_compare_pairs, d_returned, d_method)
 from .importing import (ignore_prints, import_from_file,
                         imported_modules,
                         module_to_path, path_to_module,

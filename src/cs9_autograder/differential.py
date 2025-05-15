@@ -1,4 +1,6 @@
 from collections.abc import Callable, Iterable, Mapping
+import itertools
+from functools import partial
 from types import MethodType
 from typing import Any, Callable, Optional, Union
 
@@ -64,7 +66,7 @@ class d_method:
 
     def __get__(self, instance, owner):
         @d_returned(owner.correct, owner.student)
-        def runner(grader_self, tested_class):
+        def runner(owner_self, tested_class):
             obj = tested_class(*self.ctor_args, **self.ctor_kwargs)
             tested_method = getattr(obj, owner.method)
             return tested_method(*self.m_args, **self.m_kwargs)
@@ -98,9 +100,7 @@ class d_compare(TestItem):
 
         self.bidirectional = bidirectional
 
-    def __get__(self, instance, owner):
-        super().__get__(instance, owner)
-
+    def __call__(self, instance):
         @d_returned(self.correct, self.student)
         def runner(grader_self, tested_class):
             obj_x = tested_class(*self.x_args, **self.x_kwargs)
@@ -118,9 +118,38 @@ class d_compare(TestItem):
             else:
                 return x_method(obj_y)
 
+        return runner(instance)
+
+    def __get__(self, instance, owner):
+        super().__get__(instance, owner)
+
+        return partial(self.__call__, instance)
+
+
+class d_compare_pairs(TestItem):
+    def __init__(self, ctor_args: list[tuple]
+                                  | list[tuple[tuple, dict[str, Any]]],
+                 has_kwargs: bool = False,
+                 **kwargs):
+
+        super().__init__(**kwargs)
+
+        if not has_kwargs:
+            ctor_args = [(x, {}) for x in ctor_args]
+
+        self.ctor_args = ctor_args
+
+    def __get__(self, instance, owner):
+        super().__get__(instance, owner)
+
+        def runner():
+            for lhs, rhs in itertools.product(self.ctor_args, self.ctor_args):
+                lhs_args, lhs_kwargs = lhs
+                rhs_args, rhs_kwargs = rhs
+                compare = d_compare(lhs_args, lhs_kwargs, rhs_args, rhs_kwargs,
+                                    _outer_test_item=self)
+                compare(instance)
+
         # we have to wrap the runner and pass the instance because our
         # returned function isn't bound as a method by default
-        return lambda: runner(instance)
-
-    def __get_name__(self, owner, name):
-        super().__get_name__(self, owner, name)
+        return runner

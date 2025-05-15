@@ -2,9 +2,11 @@ class TestItem:
     """An item inside of the autograder"""
     __test__ = False  # tell pytest this isn't a real unit test.
 
-    def __init__(self, correct=None, student=None, method=None, weight=None):
+    def __init__(self, correct=None, student=None, method=None, weight=None,
+                 _outer_test_item=None):
         self.instance = None
         self.owner = None
+        self.outer_test_item = _outer_test_item
 
         self._correct = correct
         self._student = student
@@ -29,10 +31,10 @@ class TestItem:
         return self._get_var('weight')
 
     def _get_var(self, var_name):
-        print("instance, owner", self.instance, self.owner)
         search_objs = [(self, f'_{var_name}'),
                        (self.instance, var_name),
-                       (self.owner, var_name)]
+                       (self.owner, var_name),
+                       (self.outer_test_item, var_name)]
         for obj, name in search_objs:
             try:
                 if var := getattr(obj, name):
@@ -49,7 +51,6 @@ class TestItem:
 
     def __get__(self, instance, owner=None):
         """Should be called from the __get__ method."""
-        print("GEEEE")
         self.instance = instance
         if owner:
             self.owner = owner

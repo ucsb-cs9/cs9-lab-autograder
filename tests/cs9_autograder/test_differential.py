@@ -2,7 +2,7 @@
 from unittest import TestCase
 import unittest
 
-from cs9_autograder import (d_compare, d_returned, d_method,
+from cs9_autograder import (d_compare, d_compare_pairs, d_returned, d_method,
                             Autograder)
 
 from .mixins import TestTester
@@ -245,3 +245,92 @@ class TestDCompare(TestTester, TestCase):
             test_0 = d_compare((1,), (2,), bidirectional=True)
 
         self.assertTestCaseFailure(Grader)
+
+
+class TestDComparePairs(TestTester, TestCase):
+    def test_d_compare_pairs_passing(self):
+        class Grader(Autograder, correct=int, student=int,
+                     method='__eq__'):
+            test_0 = d_compare_pairs([('1',), ('2',), ('3',)])
+
+        self.assertTestCaseNoFailure(Grader)
+
+    def test_d_compare_pairs_failing(self):
+        class Correct:
+            def __init__(self, value):
+                self.value = value
+
+            def __eq__(self, other):
+                return self.value == other.value
+
+        class Student:
+            def __init__(self, value):
+                self.value = value
+
+            def __eq__(self, other):
+                return True
+
+        class Grader(Autograder, correct=Correct, student=Student,
+                     method='__eq__'):
+            test_0 = d_compare_pairs([('1',), ('2',), ('3',)])
+
+        self.assertTestCaseFailure(Grader)
+
+    def test_d_compare_pairs_call_counts(self):
+        ctor_args = [('1',), ('2',), ('3',)]
+
+        class Correct:
+            call_count = 0
+            def __init__(self, value):
+                self.value = value
+
+            def __eq__(self, other):
+                Correct.call_count += 1
+                return self.value == other.value
+
+        class Student:
+            call_count = 0
+            def __init__(self, value):
+                self.value = value
+
+            def __eq__(self, other):
+                Student.call_count += 1
+                return self.value == other.value
+
+        class Grader(Autograder, correct=Correct, student=Student,
+                     method='__eq__'):
+            test_0 = d_compare_pairs(ctor_args)
+
+        self.assertTestCaseNoFailure(Grader)
+
+        # we need to do these tests after running Grader with
+        # assertTestCaseNoFailure
+        expected_call_count = len(ctor_args) ** 2
+        self.assertEqual(expected_call_count, Correct.call_count)
+        self.assertEqual(expected_call_count, Student.call_count)
+
+
+    def test_d_compare_pairs_kwargs(self):
+        test_case = self
+        class Correct:
+            def __init__(self, value=None):
+                self.value = value
+
+            def __eq__(self, other):
+                return self.value == other.value
+
+        class Student:
+            def __init__(self, value=None):
+                test_case.assertIsNotNone(value)
+                self.value = value
+
+            def __eq__(self, other):
+                return self.value == other.value
+
+        class Grader(Autograder, correct=Correct, student=Student,
+                     method='__eq__'):
+            test_0 = d_compare_pairs([((), {'value': 2}),
+                                      ((1,), {})],
+                                     has_kwargs=True)
+
+        self.assertTestCaseNoFailure(Grader)

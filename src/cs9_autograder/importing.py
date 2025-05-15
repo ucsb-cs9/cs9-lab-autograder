@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 from types import ModuleType
 from typing import cast, Optional
+import uuid
 import warnings
 
 _DEFAULT_SUBMISSION_PATH = Path('/autograder/submission')
@@ -56,22 +57,40 @@ def set_submission_path(submission_path: Path | str) -> None:
     _SUBMISSION_PATH = Path(submission_path)
 
 
-def import_student(module_name: str) -> Optional[ModuleType]:
-    with ignore_prints():
-        module_filename = (module_name + '.py')
+@contextmanager
+def student_import(import_path: Optional[Path | str] = None):
+    if import_path is None:
+        import_path = submission_path()
 
-        path = submission_path() / module_filename
-        try:
-            return import_from_file(path, module_name)
+    original_modules = set(sys.modules)
 
-        except FileNotFoundError as err:
-            missing = module_name in str(err)
-            FAILED_IMPORTS.add(FailedImport(module_filename, err, missing))
-            return None
+    with prepend_import_path(import_path):
+        with ignore_prints():
+            try:
+                yield None
 
-        except Exception as err:
-            FAILED_IMPORTS.add(FailedImport(module_filename, err, False))
-            return None
+            finally:
+                # assume all new items in sys.modules were imported in the
+                # student_import.
+                new_modules = set(sys.modules) - original_modules
+                for mod in new_modules:
+                    mangle_module(mod)
+
+
+def mangle_module(module: str, suffix: Optional[str] = None):
+    """Mangle a module in sys.modules.
+    This is needed if you need to import two modules with the same name
+    (for example, importing a student and correct module with the
+    same name.)
+
+    see: https://stackoverflow.com/a/76316559"""
+
+    if not suffix:
+        suffix = uuid.uuid1().hex
+
+    mangled = f'__{module}_{suffix}__'
+    sys.modules[mangled] = sys.modules[module]
+    del sys.modules[module]
 
 
 @contextmanager
@@ -92,6 +111,9 @@ def prepend_import_path(import_path: Path | str):
 
 
 def import_from_file(path: Path | str, module_name: str) -> ModuleType:
+    # This seems to have a side effect in adding path to the global module search path?
+    # Not sure what the issue is.
+
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None:
         raise TypeError(f'Unable to create spec from `{path}`')

@@ -9,11 +9,10 @@ from typing import Optional
 import unittest
 from unittest import TestCase
 
-from cs9_autograder import (Autograder, ignore_prints, importing, import_student,
-                            imported_modules,
+from cs9_autograder import (Autograder, ignore_prints, importing,                             imported_modules,
                             module_to_path, path_to_module,
                             prepend_import_path,
-                            set_submission_path, submission_path)
+                            set_submission_path, student_import, submission_path)
 
 from .mixins import (SubmissionPathRestorer, TestTester, restore_submission_path_config,
                     get_submission_path_config)
@@ -45,7 +44,7 @@ class TestSubmissionPath(SubmissionPathRestorer, TestCase):
         self.assertEqual(my_path, submission_path())
 
 
-class TestImportStudent(TestTester, SubmissionPathRestorer, TestCase):
+class TestStudentImport(TestTester, SubmissionPathRestorer, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -58,28 +57,29 @@ class TestImportStudent(TestTester, SubmissionPathRestorer, TestCase):
 
         importing.FAILED_IMPORTS.clear()
 
-    def test_import_student_working(self):
-        student_mod = import_student('working')
+    def test_student_import_no_caching(self):
+        """Outside of the student_import context manager, we shouldn't be able
+        to import the student module."""
+        with student_import():
+            import working
 
-        self.assertTrue(student_mod.hello_world())
+        with self.assertRaises(ImportError):
+            import working as working_1
 
-    def test_import_student_file_not_exist(self):
-        student_mod = import_student('non_existant')
+    def test_student_import_working(self):
+        with student_import():
+            import working
+        self.assertTrue(working.hello_world())
 
-        class Grader(Autograder):
-            pass
+    def test_student_import_file_not_exist(self):
+        with student_import():
+            with self.assertRaises(ImportError):
+                import non_existant
 
-        # we should get one failure from Autograder's test_student_imports
-        self.assertTestCaseFailure(Grader)
-
-    def test_import_student_exception_during_import(self):
-        student_mod = import_student('value_error')
-
-        class Grader(Autograder):
-            pass
-
-        # we should get one failure from Autograder's test_student_imports
-        self.assertTestCaseFailure(Grader)
+    def test_studen_import_exception_during_import(self):
+        with student_import():
+            with self.assertRaises(AttributeError):
+                import value_error
 
 
 class TestIgnorePrints(TestCase):

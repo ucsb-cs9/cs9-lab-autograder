@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Self, TextIO
+from typing import Optional, TextIO
 
 from .importing import path_to_module
 

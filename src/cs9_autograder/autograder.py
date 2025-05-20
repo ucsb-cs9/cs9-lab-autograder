@@ -88,8 +88,7 @@ class Autograder(unittest.TestCase):
         return mod
 
     def test_student_imports(self):
-        """Check if there have been any failed imports, if so, fail this
-        test."""
+        """test_student_imports: Checking for failed imports."""
         if not FAILED_IMPORTS:
             return
 

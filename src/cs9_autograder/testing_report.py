@@ -22,7 +22,7 @@ class TestingReport:
     __test__ = False  # tell pytest to ignore this class during test discovery
 
     @classmethod
-    def from_raw(cls, captured_stdout: str, raw_report: list[dict]) -> Self:
+    def from_raw(cls, captured_stdout: str, raw_report: list[dict]) -> "TestingReport":
         success = cls.read_success(raw_report)
         pretty = captured_stdout
         failed_tests = cls.read_failed_tests(raw_report)
@@ -64,7 +64,7 @@ class ModuleCoverage:
     missing_lines: Optional[set[int]]
 
     @classmethod
-    def from_json_obj(cls, obj: dict) -> Self:
+    def from_json_obj(cls, obj: dict) -> "ModuleCoverage":
         missing_lines = set(obj['missing_lines'])
         return cls(imported=True, missing_lines=missing_lines)
 

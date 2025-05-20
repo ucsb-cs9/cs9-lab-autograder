@@ -58,23 +58,38 @@ def set_submission_path(submission_path: Path | str) -> None:
 
 
 @contextmanager
-def student_import(import_path: Optional[Path | str] = None):
+def student_import(import_path: Optional[Path | str] = None,
+                   mangle: bool = True):
     if import_path is None:
         import_path = submission_path()
 
+    with prepend_import_path(import_path, mangle=mangle):
+        with ignore_prints():
+            yield None
+
+
+@contextmanager
+def prepend_import_path(import_path: Path | str, mangle: bool = True):
     original_modules = set(sys.modules)
 
-    with prepend_import_path(import_path):
-        with ignore_prints():
-            try:
-                yield None
+    import_path = str(import_path)
+    import_path = os.path.realpath(import_path, strict=True)
+    try:
+        sys.path.insert(1, import_path)
+        yield None
+    finally:
+        if sys.path[1] == import_path:
+            del sys.path[1]
+        else:
+            warnings.warn(f'Did not delete `{import_path}` from sys.path '
+                          'because it was no longer at index 1.',
+                          RuntimeWarning)
 
-            finally:
-                # assume all new items in sys.modules were imported in the
-                # student_import.
-                new_modules = set(sys.modules) - original_modules
-                for mod in new_modules:
-                    mangle_module(mod)
+        if mangle:
+            # assume all new items in sys.modules should get mangled
+            new_modules = set(sys.modules) - original_modules
+            for mod in new_modules:
+                mangle_module(mod)
 
 
 def mangle_module(module: str, suffix: Optional[str] = None):
@@ -93,20 +108,7 @@ def mangle_module(module: str, suffix: Optional[str] = None):
     del sys.modules[module]
 
 
-@contextmanager
-def prepend_import_path(import_path: Path | str):
-    import_path = str(import_path)
-    import_path = os.path.realpath(import_path, strict=True)
-    try:
-        sys.path.insert(1, import_path)
-        yield None
-    finally:
-        if sys.path[1] == import_path:
-            del sys.path[1]
-        else:
-            warnings.warn(f'Did not delete `{import_path}` from sys.path '
-                          'because it was no longer at index 1.',
-                          RuntimeWarning)
+
 
 
 

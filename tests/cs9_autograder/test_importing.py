@@ -131,15 +131,26 @@ class TestPathToModule(TestCase):
 
 
 class PrependImportPath(TestCase):
-    def search_path(self):
+    def base_path(self):
         script_dir = Path(__file__).resolve().parent
         return script_dir / 'prepend_import_path_test_files'
 
     def test_prepend_import_path(self):
         original_path = copy.copy(sys.path)
 
-        with prepend_import_path(self.search_path()):
+        with prepend_import_path(self.base_path() / 'good'):
             import good_module
 
         self.assertTrue(good_module.good_function)
         self.assertListEqual(original_path, sys.path)
+
+    def test_prepend_import_path_mangle(self):
+        original_path = copy.copy(sys.path)
+
+        # mangle=True should be the default.
+        with prepend_import_path(self.base_path() / 'good'):
+            from good_module import good_function as good_good
+        with prepend_import_path(self.base_path() / 'different'):
+            from good_module import good_function as different_good
+
+        self.assertIsNot(good_good, different_good)

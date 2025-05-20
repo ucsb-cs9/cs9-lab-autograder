@@ -3,7 +3,7 @@ requires = ["hatchling >= 1.26", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-source = "vcs"
+path = "src/cs9_autograder/__about__.py"
 
 [project]
 dynamic = ["version"]

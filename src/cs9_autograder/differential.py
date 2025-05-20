@@ -123,7 +123,12 @@ class d_compare(TestItem):
     def __get__(self, instance, owner):
         super().__get__(instance, owner)
 
-        return partial(self.__call__, instance)
+        func = partial(self.__call__, instance)
+
+        # hack to fix Gradescope test name
+        func.__doc__ = None
+
+        return func
 
 
 class d_compare_pairs(TestItem):

@@ -86,7 +86,8 @@ class student_import:
             mod_name = exc_value.name
             print(f'Could not import module `{mod_name}`. '
                   f'Did you name `{mod_name}.py` correctly and include it in '
-                  'your submission?')
+                  'your submission?',
+                  file=sys.stderr)
 
 
 @contextmanager

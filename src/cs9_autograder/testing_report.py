@@ -76,7 +76,7 @@ class CoverageReport:
     @classmethod
     def build_report(cls, cov_modules: Iterable[str],
                      pytest_cov_raw: dict | None,
-                     search_path: Path | str) -> Self:
+                     search_path: Path | str) -> "CoverageReport":
         """Build a report, including files listed but not imported.
         search_path: root path of the modules."""
 

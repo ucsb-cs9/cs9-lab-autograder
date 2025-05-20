@@ -65,7 +65,14 @@ def student_import(import_path: Optional[Path | str] = None,
 
     with prepend_import_path(import_path, mangle=mangle):
         with ignore_prints():
-            yield None
+            try:
+                yield None
+            except ModuleNotFoundError as err:
+                mod_name = err.name
+                print(f'Could not import module {mod_name}. '
+                      f'Did you name your file correctly and include it in '
+                      'your submission?')
+                raise err
 
 
 @contextmanager

@@ -57,22 +57,36 @@ def set_submission_path(submission_path: Path | str) -> None:
     _SUBMISSION_PATH = Path(submission_path)
 
 
-@contextmanager
-def student_import(import_path: Optional[Path | str] = None,
-                   mangle: bool = True):
-    if import_path is None:
-        import_path = submission_path()
+class student_import:
+    """A context manager to student imports."""
 
-    with prepend_import_path(import_path, mangle=mangle):
-        with ignore_prints():
-            try:
-                yield None
-            except ModuleNotFoundError as err:
-                mod_name = err.name
-                print(f'Could not import module {mod_name}. '
-                      f'Did you name your file correctly and include it in '
-                      'your submission?')
-                raise err
+    def __init__(self, import_path: Optional[Path | str] = None,
+                 mangle: bool = True):
+
+        if import_path is None:
+            import_path = submission_path()
+
+        self.import_path = import_path
+        self.mangle = mangle
+
+        self.inner_context_managers = [
+                prepend_import_path(self.import_path, mangle=self.mangle),
+                ignore_prints()
+                ]
+
+    def __enter__(self) -> None:
+        for ctxt in self.inner_context_managers:
+            ctxt.__enter__()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        for ctxt in reversed(self.inner_context_managers):
+            ctxt.__exit__(exc_type, exc_value, traceback)
+
+        if isinstance(exc_value, ModuleNotFoundError):
+            mod_name = exc_value.name
+            print(f'Could not import module `{mod_name}`. '
+                  f'Did you name `{mod_name}.py` correctly and include it in '
+                  'your submission?')
 
 
 @contextmanager

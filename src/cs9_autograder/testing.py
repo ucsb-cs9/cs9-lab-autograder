@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Any, cast, Optional, Self, TextIO
+from typing import Any, cast, Optional, TextIO
 
 from .formatting import h_rule
 from .importing import submission_path, module_to_path, path_to_module
